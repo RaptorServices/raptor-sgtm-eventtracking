@@ -1,31 +1,28 @@
-# Raptor Event Tracking for Google Tag manager
+# Raptor Event Tracking for Serverside Google Tag manager
 
-A generic template for capturing an mapping data to the Raptor tracking template
+A generic template for capturing an mapping data to the Raptor tracking template, through serverside tagging
 
 ## Prerequisites
 - A Raptor CustomerId. You will find your customerId in the Raptor controlpanel. To gain access to Raptor, please contact support@raptorsmartadvisor.com
+- Set up a server tagging container https://developers.google.com/tag-platform/tag-manager/server-side/overview
+- Set up a google tag / GA4 implementation on the client
 
 
-## Import the templates and set up a main tag
+## Import the template and set up your first tag
 
-
-- Import the template "Raptor main" from the template gallery
-    - Go to "Templates" --> Search Gallery, and search for "Raptor"
 
 - Import the template "Raptor Event Tracking" from the template gallery
-
-- Create a "Raptor Main" tag using the "Raptor Main" template
-    - Go to "Tags" --> Create new --> "Tag Configuration" and select "Raptor Main" from the list
-    - Set the trigger to fire at all pages AFTER cookie consent. Raptor Main will start to fire cookies as soon as it is loaded.
-    - Fill out your customerId in the customerId Field 
+  - Go to "Templates" --> Search Gallery, and search for "Raptor"
 
 
-## Create an Event Tag 
-
->You must add a tag for all events you want to capture (Product detail, Addtocard, removefromcart, purchase, etc)
-
-- Go to "Tags" -> "Create new" -> "Tag Configuration", and select "Raptor Event Tracking"
-- Set the trigger to fire at the specific event you want to track ( for instance ProductDetail)
+- Create a "Raptor pageview" tag using the "Raptor Event Tracking" template
+  - Go to "Tags" --> Create new --> "Tag Configuration" and select "Raptor Event Tracking" from the list
+  - Set the event type to "Page View"
+  - Set the trigger to fire at all pages on page views.
+- Capture the pageview event coming from the client
+  - Add a client in the server GTM container, triggering on all page views
+- Go to debug mode on the server container
+- Start your website, and check that data is streaming into the server tag, and the Raptor tracking in the Raptor controlpanel.
 
 ## Conguration of the Event Tag
 This section describes how to configure the tag for each event
@@ -36,6 +33,7 @@ This section describes how to configure the tag for each event
 First, you select which event you want to track. There are some events that are preset, and one that is custom. 
 
 The event types are:
+- Page view 
 - Product detail (visit)
 - Add or Remove from basket (basket)
 - Purchase (buy)
@@ -54,9 +52,8 @@ As an example you might have a datalayer looking like this:
 ```javascript
 {
   ecommerce: {
-    detail: {
-      actionField: {list: 'Apparel Gallery'},
-      products: [
+    item_view: {
+        products: [
         {
           name: 'Apple Macbook Pro',
           id: '12345',
@@ -71,7 +68,7 @@ As an example you might have a datalayer looking like this:
   }
 }
 ```
-In this case, the variable should be a datalayer variable pointing at "ecommerce.detail.products.0"
+In this case, the variable should be a datalayer variable pointing at `ecommerce.item_view.products.0`
 
 
 ### Parameter Mapping
@@ -80,19 +77,19 @@ This is where you map values from the datalayer into the Raptor tracking paramet
 >You will find the tracking parameters in the raptor controlpanel: https://www.controlpanel.raptorsmartadvisor.com (Select Integrations -> Implementing tracking)
 
 
-**Parameter Source**
+**Parameter type**
 
-* Datalayer product property: 
-  * If you have selected a product detail object/array above, you can just specify the name of the property to track. 
-* Datalayer variable
-  * Map a parameter to any value coming from the datalayer using a varible
+* Object property: 
+  * If you have selected a product detail object/array above, you can just specify the name of the property to track., for instance write `name` for tracking the name of the product
+* Variable
+  * Map a parameter to any value coming from the datalayer using a varible - or simply type a value into the field
 
 **Parameter**
 * Select the parameter to map, for instance "p2"
 
 **Parameter property name/value**
-* *When source is "Datalayer Product property":* Write the name of the property to track (for instance write "id" using the example above, for tracking the product id)
-* *When source is "Datalayer variable"*: Select the datalayer variable to track
+* *When source is "Object property":* Write the name of the property to track (for instance write "id" using the example above, for tracking the product id)
+* *When source is "Variable"*: Select the datalayer variable to track - or simply type a value into the field
 
 * Repeat for each parameter that you want to track. 
 
@@ -126,11 +123,12 @@ Example:
   }
 }
 ```
-In this case, create a datalayer variable pointing to "ecommerce.raptorModule"
+In this case, create a datalayer variable pointing to `ecommerce.raptorModule`
 
 ### Calculate subtotal
 ---
 *This setting is only visible when selecting the "Purchase" event type*
+
 Check this checkbox if you want the tag to automatically calculate subtotals for each purchased item. 
 
 The tag will calculate price * quantity for each item in the products array, and insert the subtotal into a tracking parameter
