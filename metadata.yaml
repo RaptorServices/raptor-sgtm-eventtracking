@@ -2,12 +2,8 @@ homepage: "https://www.raptorservices.com"
 documentation: "https://github.com/RaptorServices/raptor-sgtm-eventtracking"
 versions:
   # Latest version
-  - sha: 69a9af4fd3b4a289d5a9e3f93f61f92e4e945a26
+  - sha: 196478d8b5633a1b367d28195b6334533d10bf7f
     changeNotes: Version 1.0 
-
-  # Previous versions
-
-
 
 
 
