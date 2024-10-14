@@ -73,6 +73,10 @@ ___TEMPLATE_PARAMETERS___
       {
         "value": "pageview",
         "displayValue": "Page View"
+      },
+      {
+        "value": "setuser",
+        "displayValue": "Set User"
       }
     ],
     "simpleValueType": true,
@@ -703,6 +707,9 @@ switch (data.eventType) {
     purchaseEvent();
     break;
     
+  case "setuser":
+    setUser(data.ruid);
+    break;
 
   default:
     if(data.eventName) defaultEvent(data.eventName, data.productObject);
@@ -755,6 +762,10 @@ function trackEvent(event, trackingObject) {
     timeout: 1000,
   });
   log("Tracking fired", url);
+}
+
+function setUser(ruid) {
+  createCookie(cookieNames.rsaRuid, ruid, 365);
 }
 
 function buildUrl(trackingObj) {
@@ -1533,6 +1544,16 @@ scenarios:
     \nmock('sendHttpRequest', function(url, options){\n  calledUrl = url;\n} );\n\n\
     mock('getRequestHeader', 'https://www.myUrl.dk');\nrunCode(mockData);\n\n\n\n\
     assertThat(calledUrl).contains('url=https%3A%2F%2Fwww.myUrl.dk');\n\n\nassertApi('gtmOnSuccess').wasCalled();"
+- name: Should track setuser
+  code: "const mockData = {\n  customerId: '5150',\n  eventType: 'setuser',\n  ruid:\
+    \ 'dGVzdEB0ZXN0LmNvbQ==' // test@test.com\n};\n\nvar cookieData = [];\n\nmock('setCookie',\
+    \ function(key,value,options) {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n\
+    \      cookieOptions: options,\n      cookieValue: value\n    }\n );\n});\n\n\
+    function findCookie(cookieName) {\n  for(var i=0 ;i<cookieData.length;i++) {\n\
+    \    var cookie= cookieData[i];\n    if(cookie.cookieName == cookieName)\n   \
+    \   return cookie;\n  }\n}\n\n// Call runCode to run the template's code.\nrunCode(mockData);\n\
+    \nvar cookie = findCookie('rsaRuid');\n\n// Verify that the tag finished successfully.\n\
+    assertThat(cookie).isTruthy();"
 setup: ''
 
 
