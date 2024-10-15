@@ -565,6 +565,19 @@ ___TEMPLATE_PARAMETERS___
     ]
   },
   {
+    "type": "CHECKBOX",
+    "name": "encodeRuid",
+    "checkboxText": "Encode value (this is not required if you already have the passed value encoded)",
+    "simpleValueType": true,
+    "enablingConditions": [
+      {
+        "paramName": "eventType",
+        "paramValue": "setuser",
+        "type": "EQUALS"
+      }
+    ]
+  },
+  {
     "type": "TEXT",
     "name": "ruid",
     "displayName": "ruid (base64 encoded email)",
@@ -627,6 +640,7 @@ const Math = require("Math");
 const getRequestQueryParameters = require('getRequestQueryParameters');
 const getRequestHeader = require('getRequestHeader');
 const generateRandom = require('generateRandom');
+const toBase64 = require('toBase64');
 
 if(!data.customerId) return fail('CustomerId not set');
 if(!data.eventType) return success();
@@ -708,7 +722,8 @@ switch (data.eventType) {
     break;
     
   case "setuser":
-    setUser(data.ruid);
+    setUser(data.ruid, data.encodeRuid);
+    defaultEvent(data.eventType);
     break;
 
   default:
@@ -764,8 +779,12 @@ function trackEvent(event, trackingObject) {
   log("Tracking fired", url);
 }
 
-function setUser(ruid) {
-  createCookie(cookieNames.rsaRuid, ruid, 365);
+function setUser(ruid, encodeValue) {
+  // add an option to whether base64 the passed value or not
+  // first check if we can check whether the passed value is base64 - if its not encode it, otherwise just pass it
+  let ruidVal = encodeValue ? toBase64(ruid) : ruid;
+  
+  createCookie(cookieNames.rsaRuid, ruidVal, 365);
 }
 
 function buildUrl(trackingObj) {
@@ -773,11 +792,13 @@ function buildUrl(trackingObj) {
 
   
   url = appendValueToUrl('p' + data.eventTypeParameter, trackingObj['p' + data.eventTypeParameter],url);
-  url = appendValueToUrl('p' + data.priceParameterNumber, trackingObj['p' + data.priceParameterNumber],url);
-  url = appendValueToUrl('p' + data.quantityParameterNumber, trackingObj['p' + data.quantityParameterNumber],url);
-  url = appendValueToUrl('p' + data.subTotalParameterNumber, trackingObj['p' + data.subTotalParameterNumber],url);
+  url = data.priceParameterNumber ? appendValueToUrl('p' + data.priceParameterNumber, trackingObj['p' + data.priceParameterNumber],url) : url;
+  url = data.quantityParameterNumber ? appendValueToUrl('p' + data.quantityParameterNumber, trackingObj['p' + data.quantityParameterNumber],url) : url;
+  url = data.subTotalParameterNumber ? appendValueToUrl('p' + data.subTotalParameterNumber, trackingObj['p' + data.subTotalParameterNumber],url) : url;
   
-  for( var i=0;i<data.parameterMappings.length;i++)
+  let parameterMappings = data.parameterMappings || [];
+  
+  for( var i=0;i<parameterMappings.length;i++)
   {
     let parameterName = data.parameterMappings[i].parameterName;
     let parameter = trackingObj[parameterName];
@@ -1545,15 +1566,29 @@ scenarios:
     mock('getRequestHeader', 'https://www.myUrl.dk');\nrunCode(mockData);\n\n\n\n\
     assertThat(calledUrl).contains('url=https%3A%2F%2Fwww.myUrl.dk');\n\n\nassertApi('gtmOnSuccess').wasCalled();"
 - name: Should track setuser
-  code: "const mockData = {\n  customerId: '5150',\n  eventType: 'setuser',\n  ruid:\
-    \ 'dGVzdEB0ZXN0LmNvbQ==' // test@test.com\n};\n\nvar cookieData = [];\n\nmock('setCookie',\
-    \ function(key,value,options) {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n\
-    \      cookieOptions: options,\n      cookieValue: value\n    }\n );\n});\n\n\
-    function findCookie(cookieName) {\n  for(var i=0 ;i<cookieData.length;i++) {\n\
-    \    var cookie= cookieData[i];\n    if(cookie.cookieName == cookieName)\n   \
-    \   return cookie;\n  }\n}\n\n// Call runCode to run the template's code.\nrunCode(mockData);\n\
-    \nvar cookie = findCookie('rsaRuid');\n\n// Verify that the tag finished successfully.\n\
-    assertThat(cookie).isTruthy();"
+  code: "const mockData = {\n  customerId: '5150',\n  eventType: 'setuser',\n  encodeRuid:\
+    \ false,\n   eventTypeParameter:1,\n  ruid: 'dGVzdEB0ZXN0LmNvbQ==' // test@test.com\n\
+    };\n\nvar cookieData = [];\nlet calledUrl='';\n\nmock('setCookie', function(key,value,options)\
+    \ {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n      cookieOptions:\
+    \ options,\n      cookieValue: value\n    }\n );\n});\n\nmock('sendHttpRequest',\
+    \ function(url, options){\n  calledUrl = url;\n} );\n\nfunction findCookie(cookieName)\
+    \ {\n  for(var i=0 ;i<cookieData.length;i++) {\n    var cookie= cookieData[i];\n\
+    \    if(cookie.cookieName == cookieName)\n      return cookie;\n  }\n}\n\n// Call\
+    \ runCode to run the template's code.\nrunCode(mockData);\n\nvar cookie = findCookie('rsaRuid');\n\
+    \n// Verify that the tag finished successfully.\nassertThat(cookie).isTruthy();\n\
+    assertThat(calledUrl).contains('p1=setuser');"
+- name: Should encode cookies if checkbox is true
+  code: "const mockData = {\n  customerId: '5150',\n  eventType: 'setuser',\n  encodeRuid:\
+    \ true,\n   eventTypeParameter:1,\n  ruid: 'test@test.com' // test@test.com\n\
+    };\n\nvar cookieData = [];\nlet calledUrl='';\n\nmock('setCookie', function(key,value,options)\
+    \ {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n      cookieOptions:\
+    \ options,\n      cookieValue: value\n    }\n );\n});\n\nmock('sendHttpRequest',\
+    \ function(url, options){\n  calledUrl = url;\n} );\n\nfunction findCookie(cookieName)\
+    \ {\n  for(var i=0 ;i<cookieData.length;i++) {\n    var cookie= cookieData[i];\n\
+    \    if(cookie.cookieName == cookieName)\n      return cookie;\n  }\n}\n\n// Call\
+    \ runCode to run the template's code.\nrunCode(mockData);\n\nvar cookie = findCookie('rsaRuid');\n\
+    \n// Verify that the tag finished successfully.\nassertThat(cookie).isTruthy();\n\
+    assertThat(cookie.cookieValue).isEqualTo('dGVzdEB0ZXN0LmNvbQ==');\t\nassertThat(calledUrl).contains('p1=setuser');"
 setup: ''
 
 
