@@ -64,7 +64,7 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "value": "itemclick",
-        "displayValue": "Raptor Module Click (itemClick)"
+        "displayValue": "Raptor Module Click (itemclick)"
       },
       {
         "value": "custom",
@@ -72,7 +72,15 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "value": "pageview",
-        "displayValue": "Page View"
+        "displayValue": "Page View (pageview)"
+      },
+      {
+        "value": "search",
+        "displayValue": "Search (search)"
+      },
+      {
+        "value": "searchclick",
+        "displayValue": "Search Click (searchclick)"
       }
     ],
     "simpleValueType": true,
@@ -254,8 +262,18 @@ ___TEMPLATE_PARAMETERS___
     "enablingConditions": [
       {
         "paramName": "eventType",
-        "paramValue": "setuser",
-        "type": "NOT_EQUALS"
+        "paramValue": "visit",
+        "type": "EQUALS"
+      },
+      {
+        "paramName": "eventType",
+        "paramValue": "buy",
+        "type": "EQUALS"
+      },
+      {
+        "paramName": "eventType",
+        "paramValue": "custom",
+        "type": "EQUALS"
       }
     ]
   },
@@ -686,9 +704,7 @@ switch (data.eventType) {
     defaultEvent(data.eventType);
     break;
   case "visit":
-    let product = data.productObject;
-    if (!product) return fail("No product found.");
-    defaultEvent(data.eventType,product);
+    defaultEvent(data.eventType,data.productObject);
     break;
 
   case "basket":
@@ -703,7 +719,12 @@ switch (data.eventType) {
     purchaseEvent();
     break;
     
-
+  case "search":
+    defaultEvent(data.eventType);
+    break;
+  case "searchclick":
+    defaultEvent(data.eventType);
+    break;
   default:
     if(data.eventName) defaultEvent(data.eventName, data.productObject);
     break;
@@ -826,7 +847,6 @@ function calculateSubtotal(product, data, tracking){
 function getTrackingMap(product){
     
   let trackingObj = {};
-  if(!product) return trackingObj;
   
   let params = data.parameterMappings;
     if (!params) return {};
@@ -1381,43 +1401,49 @@ scenarios:
 
     assertApi('gtmOnSuccess').wasCalled();
 - name: Should set session and rsa cookie
-  code: "const mockData = {\n  customerId:'1234',\n  eventType: 'visit' \n};\nvar\
-    \ cookieOptions = {};\nvar cookieValue = '';\n\nvar cookieData = [];\n\nmock('setCookie',\
-    \ function(key,value,options) {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n\
-    \      cookieOptions: options,\n      cookieValue: value\n    }\n );\n});\n\n\n\
-    runCode(mockData);\n\n\nfunction findCookie(cookieName) {\n  for(var i=0 ;i<cookieData.length;i++)\
-    \ {\n  var cookie= cookieData[i];\n  if(cookie.cookieName == cookieName)\n   \
-    \ return cookie;\n}\n}\n\nvar cookie = findCookie('rsaSession');\n\nassertThat(cookie).isTruthy();\n\
-    assertApi('setCookie').wasCalledWith('rsaSession',cookie.cookieValue,cookie.cookieOptions);\n\
+  code: "const mockData = {\n  customerId:'1234',\n  eventType: 'visit',\n  parameterMappings:[]\n\
+    };\nvar cookieOptions = {};\nvar cookieValue = '';\n\nvar cookieData = [];\n\n\
+    mock('setCookie', function(key,value,options) {\n  \n  cookieData.push(\n    {\n\
+    \      cookieName:key,\n      cookieOptions: options,\n      cookieValue: value\n\
+    \    }\n );\n});\n\n\nrunCode(mockData);\n\n\nfunction findCookie(cookieName)\
+    \ {\n  for(var i=0 ;i<cookieData.length;i++) {\n  var cookie= cookieData[i];\n\
+    \  if(cookie.cookieName == cookieName)\n    return cookie;\n}\n}\n\nvar cookie\
+    \ = findCookie('rsaSession');\n\nassertThat(cookie).isTruthy();\nassertApi('setCookie').wasCalledWith('rsaSession',cookie.cookieValue,cookie.cookieOptions);\n\
     \n\nvar cookie = findCookie('rsa');\n\nassertThat(cookie).isTruthy();\nassertApi('setCookie').wasCalledWith('rsa',cookie.cookieValue,cookie.cookieOptions);"
 - name: Should renew sessionid and cookie id
-  code: "const mockData = {\n  customerId:'1234',\n  eventType: 'visit' \n};\nvar\
-    \ cookieOptions = {};\nvar cookieValue = '';\n\nvar cookieData = [];\n\nmock('setCookie',\
-    \ function(key,value,options) {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n\
-    \      cookieOptions: options,\n      cookieValue: value\n    }\n );\n});\n\n\
-    mock('getCookieValues', function() {return ['1234'];});\n\nrunCode(mockData);\n\
-    \n\n\n\nfunction findCookie(cookieName) {\n  for(var i=0 ;i<cookieData.length;i++)\
+  code: "const mockData = {\n  customerId:'1234',\n  eventType: 'visit',\n  parameterMappings:[]\n\
+    };\nvar cookieOptions = {};\nvar cookieValue = '';\n\nvar cookieData = [];\n\n\
+    mock('setCookie', function(key,value,options) {\n  \n  cookieData.push(\n    {\n\
+    \      cookieName:key,\n      cookieOptions: options,\n      cookieValue: value\n\
+    \    }\n );\n});\n\nmock('getCookieValues', function() {return ['1234'];});\n\n\
+    runCode(mockData);\n\n\n\n\nfunction findCookie(cookieName) {\n  for(var i=0 ;i<cookieData.length;i++)\
     \ {\n  var cookie= cookieData[i];\n  if(cookie.cookieName == cookieName)\n   \
     \ return cookie;\n}\n}\n\nvar cookie = findCookie('rsaSession');\n\nassertThat(cookie).isTruthy();\n\
     assertApi('setCookie').wasCalledWith('rsaSession','1234',cookie.cookieOptions);\n\
     \n\nvar cookie = findCookie('rsa');\n\nassertThat(cookie).isTruthy();\nassertApi('setCookie').wasCalledWith('rsa','1234',cookie.cookieOptions);"
 - name: Should set correct cookie options
   code: "const mockData = {\n  customerId:'1234',\n  eventType: 'visit',\n  useHttpOnlyCookie:\
-    \ true\n};\nvar cookieOptions = {};\nvar cookieValue = '';\n\nvar cookieData =\
-    \ [];\n\nmock('setCookie', function(key,value,options) {\n  \n  cookieData.push(\n\
-    \    {\n      cookieName:key,\n      cookieOptions: options,\n      cookieValue:\
-    \ value\n    }\n );\n});\n\n\nrunCode(mockData);\n\n\nfunction findCookie(cookieName)\
-    \ {\n  for(var i=0 ;i<cookieData.length;i++) {\n  var cookie= cookieData[i];\n\
-    \  if(cookie.cookieName == cookieName)\n    return cookie;\n}\n}\n\nvar cookie\
-    \ = findCookie('rsaSession');\n\nassertThat(cookie.cookieOptions.samesite).isEqualTo('Lax');\n\
+    \ true,\n  parameterMappings:[]\n};\nvar cookieOptions = {};\nvar cookieValue\
+    \ = '';\n\nvar cookieData = [];\n\nmock('setCookie', function(key,value,options)\
+    \ {\n  \n  cookieData.push(\n    {\n      cookieName:key,\n      cookieOptions:\
+    \ options,\n      cookieValue: value\n    }\n );\n});\n\n\nrunCode(mockData);\n\
+    \n\nfunction findCookie(cookieName) {\n  for(var i=0 ;i<cookieData.length;i++)\
+    \ {\n  var cookie= cookieData[i];\n  if(cookie.cookieName == cookieName)\n   \
+    \ return cookie;\n}\n}\n\nvar cookie = findCookie('rsaSession');\n\nassertThat(cookie.cookieOptions.samesite).isEqualTo('Lax');\n\
     assertThat(cookie.cookieOptions.path).isEqualTo('/');\nassertThat(cookie.cookieOptions.secure).isEqualTo(true);\n\
     assertThat(cookie.cookieOptions['max-age']).isEqualTo(60*60*24*0.015);\nassertThat(cookie.cookieOptions.HttpOnly).isEqualTo(true);\n\
     \ncookie = findCookie('rsa');\n\nassertThat(cookie.cookieOptions.samesite).isEqualTo('Lax');\n\
     assertThat(cookie.cookieOptions.path).isEqualTo('/');\nassertThat(cookie.cookieOptions.secure).isEqualTo(true);\n\
     assertThat(cookie.cookieOptions['max-age']).isEqualTo(60*60*24*365);\nassertThat(cookie.cookieOptions.HttpOnly).isEqualTo(true);\n"
-- name: Should fail when no productObject in dataLayer
-  code: "const mockData = {\n  customerId:'1234',\n  eventType:'visit',\n  \n};\n\n\
-    runCode(mockData);\nassertApi('gtmOnFailure').wasCalled();"
+- name: Should track when no productObject in dataLayer
+  code: "const mockData = {\n  customerId:'1234',\n  eventType:'visit',\n \n  parameterMappings:\
+    \ [\n    {\n      \"parameterName\": \"p2\",\n      \"parameterType\":\"variable\"\
+    ,\n      \"parameterValue\":\"someProductId\"\n    },\n     {\n      \"parameterName\"\
+    : \"p3\",\n      \"parameterType\":\"variable\",\n      \"parameterValue\":\"\
+    someOtherData\"\n    },\n\n  ],\n  eventTypeParameter:1\n};\n\n\n\nrunCode(mockData);\n\
+    \nassertApi('sendHttpRequest').wasCalled();\n\nassertThat(calledUrl).contains('p1=visit');\n\
+    assertThat(calledUrl).contains('p2=someProductId');\nassertThat(calledUrl).contains('p3=someOtherData');\n\
+    \n\nassertApi('gtmOnSuccess').wasCalled();"
 - name: Should track visit events
   code: "const mockData = {\n  customerId:'1234',\n  eventType:'visit',\n  productObject:\
     \ {\n    'id':'1234',\n    'name':'someProduct',\n    'category':'someCategory'\n\
@@ -1426,9 +1452,8 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\nlet calledUrl='';\n\
-    \nmock('sendHttpRequest', function(url, options){\n  calledUrl = url;\n} );\n\n\
-    runCode(mockData);\n\n\n\n\nassertApi('sendHttpRequest').wasCalled();\n\nassertThat(calledUrl).contains('p1=visit');\n\
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\n\nrunCode(mockData);\n\
+    \n\n\n\nassertApi('sendHttpRequest').wasCalled();\n\nassertThat(calledUrl).contains('p1=visit');\n\
     assertThat(calledUrl).contains('p2=1234');\nassertThat(calledUrl).contains('p3=someProduct');\n\
     assertThat(calledUrl).contains('p4=someCategory');\n\nassertApi('gtmOnSuccess').wasCalled();"
 - name: Should track basket events
@@ -1439,9 +1464,8 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\nlet calledUrl='';\n\
-    \nmock('sendHttpRequest', function(url, options){\n  calledUrl = url;\n} );\n\n\
-    runCode(mockData);\n\n\n\n\nassertApi('sendHttpRequest').wasCalled();\n\nassertThat(calledUrl).contains('p1=basket');\n\
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\n\nrunCode(mockData);\n\
+    \n\n\n\nassertApi('sendHttpRequest').wasCalled();\n\nassertThat(calledUrl).contains('p1=basket');\n\
     assertThat(calledUrl).contains('p2=1234');\nassertThat(calledUrl).contains('p3=someProduct');\n\
     assertThat(calledUrl).contains('p4=someCategory');\n\nassertApi('gtmOnSuccess').wasCalled();"
 - name: Should track itemclick events
@@ -1453,8 +1477,7 @@ scenarios:
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
     category\"\n    }\n  ],\n  eventTypeParameter:1,\n  raptorModule:'clickedModule'\n\
-    \    \n  \n  \n};\n\nlet calledUrl='';\n\nmock('sendHttpRequest', function(url,\
-    \ options){\n  calledUrl = url;\n} );\n\nrunCode(mockData);\n\nassertApi('sendHttpRequest').wasCalled();\n\
+    \    \n  \n  \n};\n\n\n\nrunCode(mockData);\n\nassertApi('sendHttpRequest').wasCalled();\n\
     \nassertThat(calledUrl).contains('p1=itemclick');\nassertThat(calledUrl).contains('p2=1234');\n\
     assertThat(calledUrl).contains('p3=someProduct');\nassertThat(calledUrl).contains('p4=someCategory');\n\
     assertThat(calledUrl).contains('am=clickedModule');\n\nassertApi('gtmOnSuccess').wasCalled();"
@@ -1513,14 +1536,12 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\nlet calledUrl='';\n\
-    \nmock('sendHttpRequest', function(url, options){\n  calledUrl = url;\n} );\n\n\
-    mock('getRequestQueryParameters', {\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n\
-    \  'utm_term':'utmTerm',\n  'utm_medium':'utmMedium',\n  'utm_content':'utmContent'\n\
-    \  \n});\nrunCode(mockData);\n\n\n\nassertThat(calledUrl).contains('utm_source=utmSource');\n\
-    assertThat(calledUrl).contains('utm_campaign=utmCampaign');\nassertThat(calledUrl).contains('utm_term=utmTerm');\n\
-    assertThat(calledUrl).contains('utm_medium=utmMedium');\nassertThat(calledUrl).contains('utm_content=utmContent');\n\
-    \nassertApi('gtmOnSuccess').wasCalled();"
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\nmock('getRequestQueryParameters',\
+    \ {\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n  'utm_term':'utmTerm',\n\
+    \  'utm_medium':'utmMedium',\n  'utm_content':'utmContent'\n  \n});\nrunCode(mockData);\n\
+    \n\n\nassertThat(calledUrl).contains('utm_source=utmSource');\nassertThat(calledUrl).contains('utm_campaign=utmCampaign');\n\
+    assertThat(calledUrl).contains('utm_term=utmTerm');\nassertThat(calledUrl).contains('utm_medium=utmMedium');\n\
+    assertThat(calledUrl).contains('utm_content=utmContent');\n\nassertApi('gtmOnSuccess').wasCalled();"
 - name: Should append encoded url to tracking
   code: "const mockData = {\n  customerId:'1234',\n  eventType:'visit',\n  productObject:\
     \ {\n    'id':'1234',\n    'name':'someProduct',\n    'category':'someCategory'\n\
@@ -1529,11 +1550,23 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\nlet calledUrl='';\n\
-    \nmock('sendHttpRequest', function(url, options){\n  calledUrl = url;\n} );\n\n\
-    mock('getRequestHeader', 'https://www.myUrl.dk');\nrunCode(mockData);\n\n\n\n\
-    assertThat(calledUrl).contains('url=https%3A%2F%2Fwww.myUrl.dk');\n\n\nassertApi('gtmOnSuccess').wasCalled();"
-setup: ''
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\n\nmock('getRequestHeader',\
+    \ 'https://www.myUrl.dk');\nrunCode(mockData);\n\nassertThat(calledUrl).contains('url=https%3A%2F%2Fwww.myUrl.dk');\n\
+    \nassertApi('gtmOnSuccess').wasCalled();"
+- name: Should track search events
+  code: "const mockData = {\n  customerId:'1234',\n  eventType:'search',\n \n  parameterMappings:\
+    \ [\n    {\n      \"parameterName\": \"p2\",\n      \"parameterType\":\"variable\"\
+    ,\n      \"parameterValue\":\"someProductId\"\n    },\n     {\n      \"parameterName\"\
+    : \"p3\",\n      \"parameterType\":\"variable\",\n      \"parameterValue\":\"\
+    someOtherData\"\n    },\n\n  ],\n  eventTypeParameter:1\n};\n\n\n\n\n\nrunCode(mockData);\n\
+    \nassertApi('sendHttpRequest').wasCalled();\n\nassertThat(calledUrl).contains('p1=search');\n\
+    assertThat(calledUrl).contains('p2=someProductId');\nassertThat(calledUrl).contains('p3=someOtherData');\n\
+    \n\nassertApi('gtmOnSuccess').wasCalled();"
+setup: |-
+  let calledUrl='';
+  mock('sendHttpRequest', function(url, options){
+    calledUrl = url;
+  } );
 
 
 ___NOTES___
