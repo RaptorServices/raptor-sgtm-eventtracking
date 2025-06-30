@@ -1535,7 +1535,7 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\nmock('getRequestQueryParameters',\
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\nmock('getQueryParameters',\
     \ {\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n  'utm_term':'utmTerm',\n\
     \  'utm_medium':'utmMedium',\n  'utm_content':'utmContent'\n  \n});\nrunCode(mockData);\n\
     \n\n\nassertThat(calledUrl).contains('utm_source=utmSource');\nassertThat(calledUrl).contains('utm_campaign=utmCampaign');\n\
