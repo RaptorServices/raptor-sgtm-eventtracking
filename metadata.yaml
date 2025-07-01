@@ -2,7 +2,7 @@ homepage: "https://www.raptorservices.com"
 documentation: "https://github.com/RaptorServices/raptor-sgtm-eventtracking"
 versions:
   # Latest version
-  - sha: e83ef471d090df9a4c84bca47dcf1588b09dd702
+  - sha: 67be18c2a3e08d1e9afc1eceaca4cf10c530d221
     changeNotes: 'Fixed bug when fetching queryparameters'
   # Previous versions
   - sha: 832a2a1a556a07adc8686074a679e0f3c9f4229c
