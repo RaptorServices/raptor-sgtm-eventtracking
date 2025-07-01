@@ -465,6 +465,26 @@ ___TEMPLATE_PARAMETERS___
             "value": "p40",
             "displayValue": "p40"
           },
+           {
+            "value": "p41",
+            "displayValue": "p41"
+          },
+          {
+            "value": "p42",
+            "displayValue": "p42"
+          },
+          {
+            "value": "p43",
+            "displayValue": "p43"
+          },
+          {
+            "value": "p44",
+            "displayValue": "p44"
+          },
+          {
+            "value": "p45",
+            "displayValue": "p45"
+          },
           {
             "value": "p100",
             "displayValue": "p100"
@@ -638,7 +658,7 @@ const sendHttpRequest = require("sendHttpRequest");
 const setCookie = require("setCookie");
 const getCookieValues = require("getCookieValues");
 const Math = require("Math");
-const getRequestQueryParameters = require('getRequestQueryParameters');
+const getQueryParameters = require('getQueryParameters');
 const getRequestHeader = require('getRequestHeader');
 const generateRandom = require('generateRandom');
 
@@ -676,7 +696,6 @@ const cookieNames = {
 
 const versionId = "raptor-sgtm-1.0.0";
 const eventData = getAllEventData();
-const queryParameters = getRequestQueryParameters();
 
 let sessionId = getCookieValues(cookieNames.rsaSession)[0];
 if (!sessionId) sessionId = generateGuid();
@@ -692,7 +711,7 @@ if(xuid) createCookie(cookieNames.rsaXuid, xuid,365);
 let ruid= getCookieValues(cookieNames.rsaRuid)[0];
 if(ruid) createCookie(cookieNames.rsaRuid, ruid, 365);
 
-let reaid= getCookieValues(cookieNames.rsaReaId)[0] || queryParameters[constants.reaIdQueryParam];
+let reaid=  getQueryParameters(constants.reaIdQueryParam)|| getCookieValues(cookieNames.rsaReaId)[0];
 if(reaid) createCookie(cookieNames.rsaReaId, reaid, 365);
 
 
@@ -805,11 +824,11 @@ function buildUrl(trackingObj) {
   url = appendValueToUrl(constants.versionQueryParam, versionId, url);
   url = appendValueToUrl(constants.url, eventData.page_location || getRequestHeader('referer'), url);
 
-  url = appendQueryValueIfExists(queryParameters, constants.utmSourceQueryParam, url);
-  url = appendQueryValueIfExists(queryParameters, constants.utmCampaignQueryParam, url);
-  url = appendQueryValueIfExists(queryParameters, constants.utmTermQueryParam, url);
-  url = appendQueryValueIfExists(queryParameters, constants.utmMediumQueryParam, url);
-  url = appendQueryValueIfExists(queryParameters, constants.utmContentQueryParam, url);
+  url = appendQueryValueIfExists(constants.utmSourceQueryParam, url);
+  url = appendQueryValueIfExists(constants.utmCampaignQueryParam, url);
+  url = appendQueryValueIfExists(constants.utmTermQueryParam, url);
+  url = appendQueryValueIfExists(constants.utmMediumQueryParam, url);
+  url = appendQueryValueIfExists(constants.utmContentQueryParam, url);
  
   return (
     constants.trackingUrl + "/" + data.customerId + ".rsa?" + url.substring(1)
@@ -857,9 +876,9 @@ function getTrackingMap(product){
     return trackingObj;
 }
 
-function appendQueryValueIfExists(queryparams, name,url)
+function appendQueryValueIfExists(name,url)
 {
-   let queryValue = queryparams[name];
+   let queryValue = getQueryParameters(name);
    if(!queryValue) return url;
   
    return url + "&" + name + "=" + queryValue;
@@ -1536,7 +1555,7 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\nmock('getRequestQueryParameters',\
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\nmock('getQueryParameters',\
     \ {\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n  'utm_term':'utmTerm',\n\
     \  'utm_medium':'utmMedium',\n  'utm_content':'utmContent'\n  \n});\nrunCode(mockData);\n\
     \n\n\nassertThat(calledUrl).contains('utm_source=utmSource');\nassertThat(calledUrl).contains('utm_campaign=utmCampaign');\n\
