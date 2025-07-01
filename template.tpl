@@ -465,6 +465,26 @@ ___TEMPLATE_PARAMETERS___
             "value": "p40",
             "displayValue": "p40"
           },
+           {
+            "value": "p41",
+            "displayValue": "p41"
+          },
+          {
+            "value": "p42",
+            "displayValue": "p42"
+          },
+          {
+            "value": "p43",
+            "displayValue": "p43"
+          },
+          {
+            "value": "p44",
+            "displayValue": "p44"
+          },
+          {
+            "value": "p45",
+            "displayValue": "p45"
+          },
           {
             "value": "p100",
             "displayValue": "p100"
