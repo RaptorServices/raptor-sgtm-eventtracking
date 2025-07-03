@@ -647,7 +647,6 @@ ___TEMPLATE_PARAMETERS___
   }
 ]
 
-
 ___SANDBOXED_JS_FOR_SERVER___
 
 const encodeUriComponent = require("encodeUriComponent");
@@ -714,6 +713,7 @@ if(ruid) createCookie(cookieNames.rsaRuid, ruid, 365);
 let reaidQuery=  getQueryParameters[constants.reaIdQueryParam];
 let reaidCookie  = getCookieValues(cookieNames.rsaReaId)[0];
 let reaid= reaidQuery || reaidCookie;
+
 if(reaid) {
   createCookie(cookieNames.rsaReaId, reaid, 365);
   log("reaId found:",reaid);
