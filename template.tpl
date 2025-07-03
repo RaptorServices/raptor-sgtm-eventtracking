@@ -658,10 +658,10 @@ const sendHttpRequest = require("sendHttpRequest");
 const setCookie = require("setCookie");
 const getCookieValues = require("getCookieValues");
 const Math = require("Math");
-const getQueryParameters = require('getQueryParameters');
+const getRequestQueryParameters = require('getRequestQueryParameters');
 const getRequestHeader = require('getRequestHeader');
 const generateRandom = require('generateRandom');
-
+const getQueryParameters = getRequestQueryParameters();
 if(!data.customerId) return fail('CustomerId not set');
 if(!data.eventType) return success();
 
@@ -711,9 +711,15 @@ if(xuid) createCookie(cookieNames.rsaXuid, xuid,365);
 let ruid= getCookieValues(cookieNames.rsaRuid)[0];
 if(ruid) createCookie(cookieNames.rsaRuid, ruid, 365);
 
-let reaid=  getQueryParameters(constants.reaIdQueryParam)|| getCookieValues(cookieNames.rsaReaId)[0];
-if(reaid) createCookie(cookieNames.rsaReaId, reaid, 365);
-
+let reaidQuery=  getQueryParameters[constants.reaIdQueryParam];
+let reaidCookie  = getCookieValues(cookieNames.rsaReaId)[0];
+let reaid= reaidQuery || reaidCookie;
+if(reaid) {
+  createCookie(cookieNames.rsaReaId, reaid, 365);
+  log("reaId found:",reaid);
+}else{
+  log("reaId not found");
+}
 
 
 switch (data.eventType) {
@@ -878,7 +884,7 @@ function getTrackingMap(product){
 
 function appendQueryValueIfExists(name,url)
 {
-   let queryValue = getQueryParameters(name);
+   let queryValue = getQueryParameters[name];
    if(!queryValue) return url;
   
    return url + "&" + name + "=" + queryValue;
@@ -1555,7 +1561,7 @@ scenarios:
     \    {\n      \"parameterName\": \"p3\",\n      \"parameterType\":\"property\"\
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
-    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\nmock('getQueryParameters',\
+    category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\n mock('getRequestQueryParameters',\
     \ {\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n  'utm_term':'utmTerm',\n\
     \  'utm_medium':'utmMedium',\n  'utm_content':'utmContent'\n  \n});\nrunCode(mockData);\n\
     \n\n\nassertThat(calledUrl).contains('utm_source=utmSource');\nassertThat(calledUrl).contains('utm_campaign=utmCampaign');\n\
