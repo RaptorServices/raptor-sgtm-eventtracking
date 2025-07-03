@@ -647,6 +647,7 @@ ___TEMPLATE_PARAMETERS___
   }
 ]
 
+
 ___SANDBOXED_JS_FOR_SERVER___
 
 const encodeUriComponent = require("encodeUriComponent");
@@ -688,7 +689,7 @@ const constants = {
 const cookieNames = {
     rsaXuid: 'rsaXuid',
     rsaRuid: 'rsaRuid',
-    rsaReaId: 'rsaReaId',
+    rsaReaId: 'rsaReaid',
     rsa: 'rsa',
     rsaSession: 'rsaSession'
 };
@@ -713,7 +714,6 @@ if(ruid) createCookie(cookieNames.rsaRuid, ruid, 365);
 let reaidQuery=  getQueryParameters[constants.reaIdQueryParam];
 let reaidCookie  = getCookieValues(cookieNames.rsaReaId)[0];
 let reaid= reaidQuery || reaidCookie;
-
 if(reaid) {
   createCookie(cookieNames.rsaReaId, reaid, 365);
   log("reaId found:",reaid);
@@ -971,7 +971,7 @@ ___SERVER_PERMISSIONS___
               },
               {
                 "type": 1,
-                "string": "rsaReaId"
+                "string": "rsaReaid"
               },
               {
                 "type": 1,
@@ -1562,11 +1562,11 @@ scenarios:
     ,\n      \"parameterValue\":\"name\"\n    },\n     {\n      \"parameterName\"\
     : \"p4\",\n      \"parameterType\":\"property\",\n      \"parameterValue\":\"\
     category\"\n    }\n  ],\n  eventTypeParameter:1\n    \n  \n  \n};\n\n\n mock('getRequestQueryParameters',\
-    \ {\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n  'utm_term':'utmTerm',\n\
+    \ {\n 'reaid':'1234',\n  'utm_source':'utmSource',\n  'utm_campaign':'utmCampaign',\n  'utm_term':'utmTerm',\n\
     \  'utm_medium':'utmMedium',\n  'utm_content':'utmContent'\n  \n});\nrunCode(mockData);\n\
     \n\n\nassertThat(calledUrl).contains('utm_source=utmSource');\nassertThat(calledUrl).contains('utm_campaign=utmCampaign');\n\
     assertThat(calledUrl).contains('utm_term=utmTerm');\nassertThat(calledUrl).contains('utm_medium=utmMedium');\n\
-    assertThat(calledUrl).contains('utm_content=utmContent');\n\nassertApi('gtmOnSuccess').wasCalled();"
+    assertThat(calledUrl).contains('utm_content=utmContent');\n assertThat(calledUrl).contains('reaid=1234');\n\nassertApi('gtmOnSuccess').wasCalled();"
 - name: Should append encoded url to tracking
   code: "const mockData = {\n  customerId:'1234',\n  eventType:'visit',\n  productObject:\
     \ {\n    'id':'1234',\n    'name':'someProduct',\n    'category':'someCategory'\n\
