@@ -56,7 +56,7 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "value": "basket",
-        "displayValue": "Add or Remove from Basket (basket)"
+        "displayValue": "Add, Remove or Update Basket (basket)"
       },
       {
         "value": "buy",
@@ -926,7 +926,8 @@ const Math = require("Math");
 const getRequestQueryParameters = require('getRequestQueryParameters');
 const getRequestHeader = require('getRequestHeader');
 const generateRandom = require('generateRandom');
-const getQueryParameters = getRequestQueryParameters();
+const parseUrl = require('parseUrl');
+const requestQueryParameters = getRequestQueryParameters();
 if(!data.customerId) return fail('CustomerId not set');
 if(!data.eventType) return success();
 
@@ -965,6 +966,8 @@ const MAX_COOKIE_DAYS = 400;
 
 const versionId = "raptor-sgtm-1.0.0";
 const eventData = getAllEventData();
+const pageUrl = eventData.page_location || getRequestHeader('referer');
+const pageQueryParameters = getUrlQueryParameters(pageUrl);
 
 let sessionId = getCookieValues(cookieNames.rsaSession)[0];
 if (!sessionId) sessionId = generateGuid();
@@ -977,10 +980,12 @@ createCookie(cookieNames.rsa, cookieId, 365);
 let xuid= getCookieValues(cookieNames.rsaXuid)[0];
 if(xuid) createCookie(cookieNames.rsaXuid, xuid,365);
 
-let ruid= getCookieValues(cookieNames.rsaRuid)[0];
+// The ruid in the URL is the plain id, the cookie holds it encoded like setEmailMarketingIdEvent does.
+let ruidQuery = getQueryParameter(constants.ruidQueryParam);
+let ruid = ruidQuery ? encodeRuid(ruidQuery) : getCookieValues(cookieNames.rsaRuid)[0];
 if(ruid) createCookie(cookieNames.rsaRuid, ruid, 365);
 
-let reaidQuery=  getQueryParameters[constants.reaIdQueryParam];
+let reaidQuery = getQueryParameter(constants.reaIdQueryParam);
 let reaidCookie  = getCookieValues(cookieNames.rsaReaId)[0];
 let reaid= reaidQuery || reaidCookie;
 if(reaid) {
@@ -1250,9 +1255,13 @@ function setEmailMarketingIdEvent() {
   }
 
   // buildUrl reads the global ruid, so this request already carries the new id.
-  ruid = toBase64(makeString(userId));
+  ruid = encodeRuid(userId);
   createCookie(cookieNames.rsaRuid, ruid, 365);
   trackEvent("setuser", {});
+}
+
+function encodeRuid(userId) {
+  return toBase64(makeString(userId));
 }
 
 function defaultEvent(eventName, product) {
@@ -1307,7 +1316,7 @@ function buildUrl(trackingObj) {
   url = appendValueToUrl(constants.ruidQueryParam, ruid, url);
   url = appendValueToUrl(constants.reaIdQueryParam, reaid, url);
   url = appendValueToUrl(constants.versionQueryParam, versionId, url);
-  url = appendValueToUrl(constants.url, eventData.page_location || getRequestHeader('referer'), url);
+  url = appendValueToUrl(constants.url, pageUrl, url);
 
   url = appendQueryValueIfExists(constants.utmSourceQueryParam, url);
   url = appendQueryValueIfExists(constants.utmCampaignQueryParam, url);
@@ -1361,12 +1370,22 @@ function getTrackingMap(product){
     return trackingObj;
 }
 
-function appendQueryValueIfExists(name,url)
-{
-   let queryValue = getQueryParameters[name];
-   if(!queryValue) return url;
-  
-   return url + "&" + name + "=" + queryValue;
+function appendQueryValueIfExists(name, url) {
+  return appendValueToUrl(name, getQueryParameter(name), url);
+}
+
+// reaid and UTM parameters are on the page URL (page_location). With GA4 the request to the server container never has them.
+// The request query is kept as a fallback for clients that send them on the request itself.
+function getQueryParameter(name) {
+  let value = pageQueryParameters[name];
+  if (value == null) value = requestQueryParameters[name];
+  return getType(value) == 'array' ? value[0] : value;
+}
+
+function getUrlQueryParameters(url) {
+  if (!url) return {};
+  let parsed = parseUrl(makeString(url));
+  return (parsed && parsed.searchParams) || {};
 }
 
 function appendValueToUrl(name, value, url) {
@@ -2656,6 +2675,54 @@ scenarios:
     });
 
     assertThat(calledUrl).contains('p1=pageview');
+    assertApi('gtmOnSuccess').wasCalled();
+- name: Should read reaid and utm from page_location
+  code: |-
+    mock('getAllEventData', {
+      page_location: 'https://shop.example/p?reaid=abc&ruid=test%40example.com&utm_source=newsletter&utm_campaign=summer%20%26%20sale'
+    });
+
+    runCode({
+      customerId:'1234',
+      eventType:'pageview',
+      eventTypeParameter: 1,
+    });
+
+    assertThat(calledUrl).contains('reaid=abc');
+    assertThat(calledUrl).contains('ruid=dGVzdEBleGFtcGxlLmNvbQ%3D%3D');
+    assertThat(mockCookies.rsaRuid).isEqualTo('dGVzdEBleGFtcGxlLmNvbQ==');
+    assertThat(calledUrl).contains('utm_source=newsletter');
+    assertThat(calledUrl).contains('utm_campaign=' + encodeUriComponent('summer & sale'));
+    assertThat(mockCookies.rsaReaid).isEqualTo('abc');
+    assertApi('gtmOnSuccess').wasCalled();
+- name: Should prefer page_location over request query
+  code: |-
+    mock('getAllEventData', {
+      page_location: 'https://shop.example/?reaid=fromPage&ruid=ruidFromPage&utm_source=pageSource'
+    });
+    mockCookies.rsaRuid = 'ruidFromCookie';
+    mock('getRequestQueryParameters', {
+      reaid: 'fromRequest',
+      ruid: 'ruidFromRequest',
+      utm_source: 'requestSource',
+      utm_medium: 'requestMedium'
+    });
+
+    runCode({
+      customerId:'1234',
+      eventType:'pageview',
+      eventTypeParameter: 1,
+    });
+
+    assertThat(calledUrl).contains('reaid=fromPage');
+    assertThat(calledUrl).doesNotContain('fromRequest');
+    const toBase64 = require('toBase64');
+    assertThat(calledUrl).contains('ruid=' + encodeUriComponent(toBase64('ruidFromPage')));
+    assertThat(calledUrl).doesNotContain('ruidFromCookie');
+    assertThat(mockCookies.rsaRuid).isEqualTo(toBase64('ruidFromPage'));
+    assertThat(calledUrl).contains('utm_source=pageSource');
+    assertThat(calledUrl).contains('utm_medium=requestMedium');
+    assertThat(mockCookies.rsaReaid).isEqualTo('fromPage');
     assertApi('gtmOnSuccess').wasCalled();
 setup: |-
   const encodeUriComponent = require('encodeUriComponent');

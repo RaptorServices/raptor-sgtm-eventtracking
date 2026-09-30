@@ -109,12 +109,12 @@ The event type tells Raptor which action took place. The following event types a
 | --- | --- | --- |
 | **Page View (pageview)** | A visitor views any page. | `page_view` |
 | **Product Detail (visit)** | A visitor views a product page. | `view_item` |
-| **Add or Remove from Basket (basket)** | A visitor adds a product to, or removes it from, the basket. See [Basket events](#basket-events). | `add_to_cart`, `remove_from_cart`, `view_cart` |
+| **Add, Remove or Update Basket (basket)** | A visitor adds a product to, or removes it from, the basket. See [Basket events](#basket-events). | `add_to_cart`, `remove_from_cart`, `view_cart` |
 | **Purchase (buy)** | A visitor completes an order. See [Purchase events](#purchase-events). | `purchase` |
 | **Raptor Module Click (itemclick)** | A visitor clicks a product recommended by Raptor. See [Raptor module clicks](#raptor-module-clicks). | `select_item` |
 | **Search (search)** | A visitor performs a search on your website. | `search`, `view_search_results` |
 | **Search Click (searchclick)** | A visitor clicks a search result. | `select_item` |
-| **Set Email Marketing ID (setuser)** | A visitor is identified, for example by logging in. See [Identifying visitors](#identifying-visitors). | `login`, `sign_up` |
+| **Set Email Marketing ID (setuser)** | A visitor is identified, for example by logging in. See [Identifying visitors](#identifying-visitors). | `login`, `sign_up`, `purchase` |
 | **Custom Event** | Any other action. See [Custom events](#custom-events). | – |
 
 For this example, select **Product Detail (visit)**.
@@ -157,9 +157,10 @@ In addition to the mapped parameters, the tag sends the following values to Rapt
 | --- | --- |
 | Session ID and cookie ID | The `rsaSession` and `rsa` cookies. The tag creates them if the visitor does not have them yet. |
 | Page URL | `page_location` from the event data, or the page the request came from. |
-| ReaID | The `reaid` parameter in the request URL, or the `rsaReaid` cookie. See [Identifying visitors](#identifying-visitors). |
+| ReaID | The `reaid` parameter in the page URL, or the `rsaReaid` cookie. See [Identifying visitors](#identifying-visitors). |
+| ruId | The `ruid` parameter in the page URL, or the `rsaRuid` cookie. See [Identifying visitors](#identifying-visitors). |
 | Raptor module | The value of **Raptor Module Clicked**, if set. |
-| UTM parameters | `utm_source`, `utm_campaign`, `utm_term`, `utm_medium` and `utm_content`, if present in the request URL. |
+| UTM parameters | `utm_source`, `utm_campaign`, `utm_term`, `utm_medium` and `utm_content`, if present in the page URL. |
 
 ### Add a trigger and save the tag
 
@@ -232,7 +233,6 @@ We recommend creating **one tag per action**:
 - A "Raptor – Remove from basket" tag with the Basket Action **Remove from basket**, fired when the Event Name equals `remove_from_cart`.
 - A "Raptor – Set basket" tag with the Basket Action **Set basket**, fired when the Event Name equals `view_cart`. See [Set basket](#set-basket).
 
-Alternatively, a single tag can handle adding, removing and clearing. In that case, select a variable in **Basket Action** that contains `AddToBasket`, `RemoveFromBasket` or `ClearBasket` (not case-sensitive). **Set basket** always requires a separate tag with **Set basket** selected, as the product list settings are only shown for this action.
 
 ### Set basket
 
@@ -331,7 +331,9 @@ When a visitor identifies themselves, for example by logging in or subscribing t
 
 The tag encodes the user ID, stores it in the `rsaRuid` cookie and sends it to Raptor. All subsequent events from the visitor include it as well. The ID is encoded in the same way as by the client-side script, so the same visitor is recognised in both setups. If the variable is empty, the tag does nothing.
 
+The user ID can also be passed in the page URL as a `ruid` parameter, for example `?ruid=visitor%40example.com`. Every Raptor tag then encodes it in the same way, stores it in the `rsaRuid` cookie, replacing any previous value, and sends it to Raptor. Note that the user ID is then visible in the page URL, which is also sent to Google Analytics as `page_location`.
+
 > **Important:** To comply with GDPR, make sure the user ID does not end up as personal data in Google Analytics. In the GA4 tag in your server container, add `raptor_user_id` under **Parameters to exclude**.
 
 
-When a visitor clicks a link in one of your Raptor marketing emails, the link contains a `reaid` parameter. This is an encrypted user ID that is known only to Raptor. When the `reaid` parameter is present in the URL of the request received by the server container, the tag stores it in the `rsaReaid` cookie and sends it with all subsequent events. This allows Raptor to recognise the visitor and improves their personal recommendations.
+When a visitor clicks a link in one of your Raptor marketing emails, the link contains a `ruid` parameter.  When the `ruid` parameter is present in the page URL (`page_location` in the event data), the tag encodes the value and stores it in the `rsaRuid` cookie and sends it with all subsequent events. This allows Raptor to recognise the visitor and improves their personal recommendations.
