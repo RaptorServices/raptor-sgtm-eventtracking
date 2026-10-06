@@ -2,9 +2,11 @@ homepage: "https://www.raptorservices.com"
 documentation: "https://github.com/RaptorServices/raptor-sgtm-eventtracking"
 versions:
   # Latest version
-  - sha: 8b10f85135dc902d7af7fc44114599843372bfca
-    changeNotes: 'Fixed issue with missing queryparameters api and cookiename'  
+  - sha: 3aba5a6b7a49f6d81f2e8d2ad627564eb1ca53b5
+    changeNotes: 'Version 2.0 added internal Basket handling: Add/Remove/Clear/Set and setEmailMarketingId' 
   # Previous versions
+  - sha: 8b10f85135dc902d7af7fc44114599843372bfca
+    changeNotes: 'Fixed issue with missing queryparameters api and cookiename'
   - sha: 67be18c2a3e08d1e9afc1eceaca4cf10c530d221
     changeNotes: 'Fixed bug when fetching queryparameters'
   - sha: 832a2a1a556a07adc8686074a679e0f3c9f4229c
