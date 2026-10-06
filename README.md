@@ -4,7 +4,7 @@ Raptor tracking records how visitors interact with your website, including which
 
 With server-side Google Tag Manager (sGTM), your website sends its events to your own tagging server, which forwards them to Raptor. No Raptor script is loaded in the visitor's browser. This guide describes the setup step by step.
 
-> Looking for the setup in a regular (web) GTM container? See [Client-side tracking with Google Tag Manager](README%20-%20clientside.md).
+> Looking for the setup in a regular (web) GTM container? See [Client-side tracking with Google Tag Manager](https://github.com/RaptorServices/raptor-gtm-eventtracking).
 
 ## How it works
 
@@ -210,7 +210,7 @@ _These settings are only available for "Add or Remove from Basket (basket)"._
 Raptor requires the **complete basket content** with every basket event, not only the product that was added or removed. GA4 basket events such as `add_to_cart` usually only contain the product that was added. The tag therefore supports two ways of providing the basket content, selected under **Basket Content Source**:
 
 - **Provided in the event data**: Select this option if your website already sends the complete list of basket products with every basket event. Map it to the basket content parameter (usually p10) under Parameter Mapping, in the same way as any other value. The product IDs must be provided as a comma-separated list, for example `1234,4567,3456`.
-- **Stored by the tag in a cookie in the visitor's browser**: Select this option if your website only sends the product that was added or removed. The tag then stores the basket in a first-party cookie (`rsaBasket`), updates it with every basket event and sends the complete basket to Raptor as a comma-separated list of product IDs.
+- **Stored by the tag in a cookie in the visitor's browser** (default): Select this option if your website only sends the product that was added or removed. The tag then stores the basket in a first-party cookie (`rsaBasket`), updates it with every basket event and sends the complete basket to Raptor as a comma-separated list of product IDs.
 
 ### Settings when the tag stores the basket
 
@@ -331,9 +331,6 @@ When a visitor identifies themselves, for example by logging in or subscribing t
 
 The tag encodes the user ID, stores it in the `rsaRuid` cookie and sends it to Raptor. All subsequent events from the visitor include it as well. The ID is encoded in the same way as by the client-side script, so the same visitor is recognised in both setups. If the variable is empty, the tag does nothing.
 
-The user ID can also be passed in the page URL as a `ruid` parameter, for example `?ruid=visitor%40example.com`. Every Raptor tag then encodes it in the same way, stores it in the `rsaRuid` cookie, replacing any previous value, and sends it to Raptor. Note that the user ID is then visible in the page URL, which is also sent to Google Analytics as `page_location`.
+The user ID can also be passed in the page URL as a `ruid` parameter, for example `?ruid=visitor%40example.com`. Links in your Raptor marketing emails contain this parameter. Every Raptor tag then encodes it in the same way, stores it in the `rsaRuid` cookie, replacing any previous value, and sends it with all subsequent events. This allows Raptor to recognise the visitor and improves their personal recommendations. Note that the user ID is then visible in the page URL, which is also sent to Google Analytics as `page_location`.
 
 > **Important:** To comply with GDPR, make sure the user ID does not end up as personal data in Google Analytics. In the GA4 tag in your server container, add `raptor_user_id` under **Parameters to exclude**.
-
-
-When a visitor clicks a link in one of your Raptor marketing emails, the link contains a `ruid` parameter.  When the `ruid` parameter is present in the page URL (`page_location` in the event data), the tag encodes the value and stores it in the `rsaRuid` cookie and sends it with all subsequent events. This allows Raptor to recognise the visitor and improves their personal recommendations.

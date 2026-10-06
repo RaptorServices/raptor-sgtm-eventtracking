@@ -135,7 +135,7 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "simpleValueType": true,
-        "defaultValue": "external",
+        "defaultValue": "internal",
         "help": "Raptor requires the complete basket content with every basket event, not only the product that was added or removed.<br/><br/>Select the second option if your website already provides the complete list of basket products in the event data.<br/><br/>Select the first option if it does not. The tag then stores the basket in a first-party cookie (rsaBasket) and updates it with every basket event. The tag only needs to know which product was added or removed, and sends the complete basket to Raptor as a comma-separated list of product IDs, for example 123,456."
       },
       {
@@ -964,7 +964,7 @@ const cookieNames = {
 // Browsers cap cookie lifetime at 400 days, used when the basket lifetime is unlimited.
 const MAX_COOKIE_DAYS = 400;
 
-const versionId = "raptor-sgtm-1.0.0";
+const versionId = "raptor-sgtm-2.0.0";
 const eventData = getAllEventData();
 const pageUrl = eventData.page_location || getRequestHeader('referer');
 const pageQueryParameters = getUrlQueryParameters(pageUrl);
@@ -1220,14 +1220,6 @@ function getBasketContentParameterName() {
   return 'p' + (data.basketContentParameterNumber || 10);
 }
 
-function isMappedParameter(parameterName) {
-  let params = data.parameterMappings || [];
-  for (var i = 0; i < params.length; i++) {
-    if (params[i].parameterName == parameterName) return true;
-  }
-  return false;
-}
-
 function purchaseEvent() {
   let products = data.productArray;
 
@@ -1291,20 +1283,24 @@ function buildUrl(trackingObj) {
   url = appendValueToUrl('p' + data.quantityParameterNumber, trackingObj['p' + data.quantityParameterNumber],url);
   url = appendValueToUrl('p' + data.subTotalParameterNumber, trackingObj['p' + data.subTotalParameterNumber],url);
   
+  // With internal basket tracking the basket content is sent below, even if the parameter is also mapped.
+  let sendsInternalBasket = data.eventType == 'basket' && data.basketTrackingMode == 'internal';
+  let basketParameterName = getBasketContentParameterName();
+
   // Parameter Mapping is hidden for some event types (setuser), leaving it undefined.
   let mappings = data.parameterMappings || [];
   for( var i=0;i<mappings.length;i++)
   {
     let parameterName = mappings[i].parameterName;
+    if (sendsInternalBasket && parameterName == basketParameterName) continue;
     let parameter = trackingObj[parameterName];
-   
+
      if(parameter) url = appendValueToUrl(parameterName,parameter,url);
   }
 
-  // Internal basket content is not in the mappings. It is sent even when empty, so Raptor sees the basket was emptied.
-  let basketParameterName = getBasketContentParameterName();
+  // Internal basket content is sent even when empty, so Raptor sees the basket was emptied.
   let basketContent = trackingObj[basketParameterName];
-  if (getType(basketContent) == 'string' && !isMappedParameter(basketParameterName)) {
+  if (sendsInternalBasket && getType(basketContent) == 'string') {
     url = url + "&" + basketParameterName + "=" + encodeUriComponent(basketContent);
   }
 
@@ -2262,11 +2258,20 @@ scenarios:
     assertThat(sentUrls[1]).contains('p10=&');
     assertThat(mockCookies.rsaBasket).isUndefined();
 
+    // The emptied basket is also sent when the basket parameter is mapped
+    mockData.parameterMappings = [
+      {"parameterName":"p10","parameterType":"variable","parameterValue":""},
+    ];
+    runCode(mockData);
+    assertThat(sentUrls[2]).contains('p10=&');
+    assertThat(sentUrls[2].split('p10=').length).isEqualTo(2);
+    mockData.parameterMappings = [];
+
     mockData.basketAction = 'AddToBasket';
     mockData.basketProductId = '23456';
     runCode(mockData);
 
-    assertThat(sentUrls[2]).contains('p10=23456&');
+    assertThat(sentUrls[3]).contains('p10=23456&');
 - name: Should send basket content in configured parameter
   code: |-
     const mockData = {
