@@ -135,8 +135,12 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "simpleValueType": true,
-        "defaultValue": "internal",
-        "help": "Raptor requires the complete basket content with every basket event, not only the product that was added or removed.<br/><br/>Select the second option if your website already provides the complete list of basket products in the event data.<br/><br/>Select the first option if it does not. The tag then stores the basket in a first-party cookie (rsaBasket) and updates it with every basket event. The tag only needs to know which product was added or removed, and sends the complete basket to Raptor as a comma-separated list of product IDs, for example 123,456."
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          }
+        ],
+        "help": "Raptor requires the complete basket content with every basket event, not only the product that was added or removed.<br/><br/>Select the second option if your website already provides the complete list of basket products in the event data.<br/><br/>Select the first option if it does not. The tag then stores the basket in a first-party cookie (rsaBasket) and updates it with every basket event. The tag only needs to know which product was added or removed, and sends the complete basket to Raptor as a comma-separated list of product IDs, for example 123,456.<br/>"
       },
       {
         "type": "SELECT",
